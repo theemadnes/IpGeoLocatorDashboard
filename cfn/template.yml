@@ -157,10 +157,10 @@ Resources:
       #RoleMappings: 
       #  String to RoleMapping object map
       Roles: 
-        #authenticated:
-        unauthenticated: !GetAtt WebSocketsIdentityPoolRole.Arn
+        #authenticated: !GetAtt  WebSocketsIdentityPoolAuthenticatedRole.Arn
+        unauthenticated: !GetAtt  WebSocketsIdentityPoolUnauthenticatedRole.Arn
 
-  WebSocketsIdentityPoolRole:
+  WebSocketsIdentityPoolUnauthenticatedRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument: 
@@ -187,6 +187,34 @@ Resources:
                   - "iot:Connect"
                   - "iot:Receive"
                 Resource: !Join [ "", [ "arn:aws:iot:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":topic/", !Ref IotTopicName ] ]
+
+  #WebSocketsIdentityPoolAuthenticatedRole:
+  #  Type: "AWS::IAM::Role"
+  #  Properties:
+  #    AssumeRolePolicyDocument: 
+  #      Version: "2012-10-17"
+  #      Statement:
+  #        - Effect: "Allow"
+  #          Principal: 
+  #            Federated: "cognito-identity.amazonaws.com"
+  #          Action: 
+  #            - "sts:AssumeRoleWithWebIdentity"
+  #          Condition:
+  #            StringEquals: 
+  #              "cognito-identity.amazonaws.com:aud": !Ref WebSocketsIdentityPool
+  #            "ForAnyValue:StringLike":
+  #              "cognito-identity.amazonaws.com:amr": authenticated
+  #    Policies:
+  #      - PolicyName: "CognitoAuthorizedPolicy"
+  #        PolicyDocument: 
+  #          Version: "2012-10-17"
+  #          Statement: 
+  #            - Effect: "Allow"
+  #              Action:
+  #                - "iot:Subscribe"
+  #                - "iot:Connect"
+  #                - "iot:Receive"
+  #              Resource: !Join [ "", [ "arn:aws:iot:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":topic/", !Ref IotTopicName ] ]
 
 Outputs:
 
