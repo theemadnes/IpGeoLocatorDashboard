@@ -65,6 +65,7 @@ Resources:
           import io
           import base64
           from botocore.vendored import requests
+          import ipaddress
 
           logging.basicConfig(format='%(levelname)s:%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',level=logging.INFO)
           logger = logging.getLogger()
@@ -94,6 +95,10 @@ Resources:
               }
               return json_payload
 
+          def get_geolocation_data(source_ip):
+
+              return requests.get('http://ip-api.com/json/' + source_ip).json()
+
           def lambda_handler(event, context):
 
               logger.info(json.dumps(event))
@@ -112,12 +117,17 @@ Resources:
 
                   log_event_json = vpcfl_to_json(str(log_event['message']))       
                   logger.info(log_event_json)
-                  logger.info(iot_client.publish(
-                      topic=os.environ['IOT_TOPIC_NAME'],
-                      qos=1, # at least once 
-                      payload=bytes(json.dumps(log_event_json), "utf-8")
+                  if not ipaddress.ip_address(log_event_json['srcaddr']).is_private:
+                      geolocation_data = get_geolocation_data(log_event_json['srcaddr'])
+                      merged_data = {**log_event_json, **geolocation_data}
+                      logger.info(iot_client.publish(
+                          topic=os.environ['IOT_TOPIC_NAME'],
+                          qos=1, # at least once 
+                          payload=bytes(json.dumps(merged_data), "utf-8")
+                          )
                       )
-                  )
+                  else:
+                      logger.info("Source IP is private. Ignoring...")
 
   FlowLogExportLambdaProcessorInvokePermission:
     Type: "AWS::Lambda::Permission"
