@@ -1,0 +1,97 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script src="https://sdk.amazonaws.com/js/aws-sdk-2.251.1.min.js"></script>
+        <script src="js/sig4-utils.js"></script>
+        <script src="js/variables.js"></script>
+        <script type="text/javascript">
+            /*
+            ### ATTENTION: check out js/variables-example.js 
+            ### once you've modified that file to represent your environment,
+            ### rename it to variables.js for this page to work
+            */
+            client = null; // waiting for our MQTT client
+            AWS.config.region = region;
+            var creds = new AWS.CognitoIdentityCredentials({
+                        IdentityPoolId: cognitoIdentityPoolId
+                        });
+            AWS.config.credentials = creds;
+            //call refresh method in order to authenticate user and get new temp credentials
+            AWS.config.credentials.refresh((error) => {
+                if (error) {
+                    console.error(error);
+                } else {
+                    console.log('Successfully logged!');
+                    var datetime = AWS.util.date.iso8601(new Date()).replace(/[:\-]|\.\d{3}/g, '');
+                    var date = datetime.substr(0, 8);
+
+                    var method = 'GET';
+                    var protocol = 'wss';
+                    var uri = '/mqtt';
+                    var service = 'iotdevicegateway';
+                    var algorithm = 'AWS4-HMAC-SHA256';
+
+                    var credentialScope = date + '/' + region + '/' + service + '/' + 'aws4_request';
+                    var canonicalQuerystring = 'X-Amz-Algorithm=' + algorithm;
+                    canonicalQuerystring += '&X-Amz-Credential=' + encodeURIComponent(creds.accessKeyId + '/' + credentialScope);
+                    canonicalQuerystring += '&X-Amz-Date=' + datetime;
+                    canonicalQuerystring += '&X-Amz-SignedHeaders=host';
+
+                    var canonicalHeaders = 'host:' + awsIotEndpointAddress + '\n';
+                    var payloadHash = AWS.util.crypto.sha256('', 'hex')
+                    var canonicalRequest = method + '\n' + uri + '\n' + canonicalQuerystring + '\n' + canonicalHeaders + '\nhost\n' + payloadHash;
+
+                    var stringToSign = algorithm + '\n' + datetime + '\n' + credentialScope + '\n' + AWS.util.crypto.sha256(canonicalRequest, 'hex');
+                    var signingKey = SigV4Utils.getSignatureKey(creds.secretAccessKey, date, region, service);
+                    var signature = AWS.util.crypto.hmac(signingKey, stringToSign, 'hex');
+
+                    canonicalQuerystring += '&X-Amz-Signature=' + signature;
+
+                    canonicalQuerystring += '&X-Amz-Security-Token=' + encodeURIComponent(creds.sessionToken);
+
+                    //console.log(canonicalQuerystring);
+
+                    var requestUrl = protocol + '://' + awsIotEndpointAddress + uri + '?' + canonicalQuerystring;
+
+                    client = new Paho.MQTT.Client(requestUrl, "client123");
+                    var connectOptions = {
+                        onSuccess: function(){
+                            // connect succeeded
+                            console.log("Connected to AWS IoT!");
+                            client.subscribe(mqttTopicName);
+                        },
+                        useSSL: true,
+                        timeout: 3,
+                        mqttVersion: 4,
+                        onFailure: function() {
+                            // connect failed
+                            console.log("Connection to AWS IoT failed.");
+                            console.error(error);
+                        }                 
+                    };
+                    function onMessageArrived(message) {
+                    console.log("onMessageArrived:"+message.payloadString);
+                    }
+                    client.connect(connectOptions);
+                    client.onMessageArrived = onMessageArrived;
+                        }
+                        });
+            
+            
+        </script>
+        <title>VPC Flow Logs GeoLocation Dashboard</title>
+    </head>
+    <body>
+        <div class="jumbotron">
+                <div class="container">
+                    <h1>VPC Flow Logs GeoLocation Dashboard</h1>
+                </div>
+        </div>
+    </body>
+</html>

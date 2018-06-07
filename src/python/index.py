@@ -38,7 +38,11 @@ def vpcfl_to_json(payload):
 
 def get_geolocation_data(source_ip):
 
-    return requests.get('http://ip-api.com/json/' + source_ip).json()
+    try:        
+        return requests.get('http://ip-api.com/json/' + source_ip).json()
+    except:
+        logger.info("Error retrieving geolocation data...")
+        return None
 
 def lambda_handler(event, context):
 
@@ -59,12 +63,12 @@ def lambda_handler(event, context):
         log_event_json = vpcfl_to_json(str(log_event['message']))       
         logger.info(log_event_json)
         if not ipaddress.ip_address(log_event_json['srcaddr']).is_private:
-            geolocation_data = get_geolocation_data(log_event_json['srcaddr'])
-            merged_data = {**log_event_json, **geolocation_data}
+            log_event_json['geodata'] = get_geolocation_data(log_event_json['srcaddr'])
+            #merged_data = {**log_event_json, **geolocation_data}
             logger.info(iot_client.publish(
                 topic=os.environ['IOT_TOPIC_NAME'],
                 qos=1, # at least once 
-                payload=bytes(json.dumps(merged_data), "utf-8")
+                payload=bytes(json.dumps(log_event_json), "utf-8")
                 )
             )
         else:
