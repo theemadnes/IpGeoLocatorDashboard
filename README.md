@@ -11,7 +11,7 @@ I thought an interesting experiment would be to visualize *where* various access
 
 TODO: architecture visualization 
 
-VPC Flow Logs are the core of this architecture. They get streamed via a CloudWatch Logs subscription to a Lambda function. That Lambda function JSONifies the payload, and then enriches that payload with geolocation data; the function then publishes that payload to an MQTT topic in AWS IoT. 
+VPC Flow Logs are the core of this architecture. You pick a Flow Log when deploying the CloudFormation stack, and that log gets streamed via a CloudWatch Logs subscription to a Lambda function. The Lambda function JSONifies the payload, and then enriches that payload with geolocation data; the function then publishes that payload to an MQTT topic in AWS IoT. 
 
 Why AWS IoT? Because we can access that message stream in a browser using MQTT over WebSockets! For access, I use a Cognito Identity Pool (in unauthenticated access mode), which will vend temporary AWS credentials for accessing the AWS IoT service endpoint. 
 
