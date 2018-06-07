@@ -17,7 +17,7 @@ Why AWS IoT? Because we can access that message stream in a browser using MQTT o
 
 ### Visualization
 
-Visualization is a pretty basic affair - we're doing everything in the browser via the AWS JavaScript SDK, a Paho MQTT client, Google Geocharts, and a few addtional support scripts. At time of writing this (June 8, 2018), the dashboard simply visualizes the incoming stream of events on a world map. It looks like so: 
+Visualization is a pretty basic affair - we're doing everything in the browser via the AWS JavaScript SDK, a Paho MQTT client, Google Geocharts, and a few additional support scripts. At time of writing this (June 8, 2018), the dashboard simply visualizes the incoming stream of events on a world map. It looks like so: 
 
 ![Basic dashboarding](readme_assets/img/dashboard_1.PNG)
 
