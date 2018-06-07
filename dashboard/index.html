@@ -10,6 +10,7 @@
         <script src="https://sdk.amazonaws.com/js/aws-sdk-2.251.1.min.js"></script>
         <script src="js/sig4-utils.js"></script>
         <script src="js/variables.js"></script>
+        <script src="js/mapping-data-searcher.js"></script>
         <script type="text/javascript">
             /*
             ### ATTENTION: check out js/variables-example.js 
@@ -17,6 +18,26 @@
             ### rename it to variables.js for this page to work
             */
             client = null; // waiting for our MQTT client
+            chart = null; // waiting for Geocharts
+            msg = null; // testing for messages
+            
+            // setting up datapoints for the geochart and helper functions
+            mapping_data = [];
+            /*
+            mapping_data = [
+            ['Country', 'VPC Flow Log events'],
+            ['Germany', 200],
+            ['United States', 300],
+            ['Brazil', 400],
+            ['Canada', 500],
+            ['France', 600],
+            ['Russia', 700]
+            ];
+            */
+            mapping_data = [
+            ['Country', 'VPC Flow Log events']];
+
+            // set up AWS environment
             AWS.config.region = region;
             var creds = new AWS.CognitoIdentityCredentials({
                         IdentityPoolId: cognitoIdentityPoolId
@@ -77,13 +98,33 @@
                     };
                     function onMessageArrived(message) {
                     console.log("onMessageArrived:"+message.payloadString);
+                    mapping_data = MappingDataSearcher.search(JSON.parse(message.payloadString)["geodata"]["country"], mapping_data);
+                    msg = message;
                     }
+                    
                     client.connect(connectOptions);
                     client.onMessageArrived = onMessageArrived;
                         }
                         });
-            
-            
+
+           // now do the Google geocharts stuff
+           google.charts.load('current', {'packages':['geochart']});
+           google.charts.setOnLoadCallback(drawRegionsMap);
+           setInterval(drawRegionsMap, 1000);
+           function drawRegionsMap() {
+            var data = google.visualization.arrayToDataTable(mapping_data);
+
+            var options = {
+                colorAxis: {colors: ['#FFFFFF', '#B40937']}
+            };
+
+            if (chart==null)
+                chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+
+            chart.draw(data, options);
+           }
+
+
         </script>
         <title>VPC Flow Logs GeoLocation Dashboard</title>
     </head>
@@ -93,5 +134,6 @@
                     <h1>VPC Flow Logs GeoLocation Dashboard</h1>
                 </div>
         </div>
+        <div class="center-block" id="regions_div" style="width: 900px; height: 500px;"></div>
     </body>
 </html>

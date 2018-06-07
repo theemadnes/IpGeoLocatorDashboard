@@ -3,5 +3,5 @@
 var cognitoIdentityPoolId = "replace"; // this value can be grabbed from the cloudformation output for your stack
 var region = "replace"; // replace with whatever region your stack is deployed to 
 var awsIotEndpointAddress = "replace"; // this value can be grabbed via the IoT Core console or via the CLI 
-var mqttTopicName = "ipgeolocator/publish";
+var mqttTopicName = "ipgeolocator/publish"; // change only if you 
 // ###
