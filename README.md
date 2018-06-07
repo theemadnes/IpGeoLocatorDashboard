@@ -5,7 +5,7 @@ Small PoC to analyze AWS VPC Flow Logs in near real-time by enriching IP address
 
 I've been using VPC Flow Logs for analytics for a while, and I've even written some analytics tools using AWS Athena & Glue to issue queries via SQL to aggregate throughput metrics. Occasionally I'll look at the logs and notice the various access attempts to my resources, and how those attempts span the globe. 
 
-I thought an interesting experiment would be to visualize *where* various access attempts to my AWS VPC resources are coming from. 
+I thought an interesting experiment would be to visualize *where* various access attempts to my AWS VPC resources are coming from, and to do so in a near realtime fashion in the browser.
 
 ### Architecture
 
@@ -20,3 +20,9 @@ Why AWS IoT? Because we can access that message stream in a browser using MQTT o
 Visualization is a pretty basic affair - we're doing everything in the browser via the AWS JavaScript SDK, a Paho MQTT client, Google Geocharts, and a few addtional support scripts. At time of writing this (June 8, 2018), the dashboard simply visualizes the incoming stream of events on a world map. It looks like so: 
 
 ![Basic dashboarding](readme_assets/img/dashboard_1.PNG)
+
+### Deployment
+
+As you might imagine, you'll need to have VPC Flow Logs enabled on one of your VPCs in AWS. Take note of the *name* of that log in CloudWatch Logs, as you'll use that as an input when you deploy the CloudFormation stack.
+
+Use the CloudFormation template in the `cfn` directory, and use the outputs from the stack to modify the correct details in `dashboard/js/variables.js` (make sure to check `variables-example.js`!!!), and you should be good to go. 
