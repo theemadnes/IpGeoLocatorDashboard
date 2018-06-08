@@ -13,7 +13,7 @@ TODO: architecture visualization
 
 VPC Flow Logs are the core of this architecture. You pick a Flow Log when deploying the CloudFormation stack, and that log gets streamed via a CloudWatch Logs subscription to a Lambda function. The Lambda function first looks to see if the `srcaddr` (source IP address) for a given entry is public; if it is, the function JSONifies the payload, and then enriches that payload with geolocation data; the function then publishes that payload to an MQTT topic in AWS IoT. 
 
-Why AWS IoT? Because we can access that message stream in a browser using MQTT over WebSockets! For access, I use a Cognito Identity Pool (in unauthenticated access mode), which will vend temporary AWS credentials for accessing the AWS IoT service endpoint. 
+Why AWS IoT? Because we can access that message stream in a browser using MQTT over WebSockets without needing to build or manage any infrastructure! For access control, I use a Cognito Identity Pool (in unauthenticated access mode, for now), which will vend temporary AWS credentials for accessing the AWS IoT service endpoint. 
 
 ### Visualization
 
