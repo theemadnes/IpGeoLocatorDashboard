@@ -8,12 +8,14 @@ import base64
 from botocore.vendored import requests
 import ipaddress
 
-logging.basicConfig(format='%(levelname)s:%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(asctime)s %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# create IoT data plane client 
+# create IoT data plane client
 iot_client = boto3.client('iot-data')
+
 
 # convert VPC Flow Log format to JSON
 def vpcfl_to_json(payload):
@@ -36,38 +38,40 @@ def vpcfl_to_json(payload):
     }
     return json_payload
 
-def get_geolocation_data(source_ip):
 
-    try:        
+def get_geolocation_data(source_ip):
+    try:
         return requests.get('http://ip-api.com/json/' + source_ip).json()
-    except:
+    except Exception as e:
         logger.info("Error retrieving geolocation data...")
+        logger.error(e)
         return None
+
 
 def lambda_handler(event, context):
 
     logger.info(json.dumps(event))
-    
+
     decodedLogsData = base64.b64decode(event['awslogs']['data'])
     # decompress and extract data from payload
     in_ = io.BytesIO()
     in_.write(decodedLogsData)
     in_.seek(0)
     with gzip.GzipFile(fileobj=in_, mode='rb') as payload:
-        gunzipped_bytes_obj = payload.read()   
+        gunzipped_bytes_obj = payload.read()
 
     allEvents = json.loads(gunzipped_bytes_obj.decode())
-    
+
     for log_event in allEvents['logEvents']:
 
-        log_event_json = vpcfl_to_json(str(log_event['message']))       
+        log_event_json = vpcfl_to_json(str(log_event['message']))
         logger.info(log_event_json)
         if not ipaddress.ip_address(log_event_json['srcaddr']).is_private:
-            log_event_json['geodata'] = get_geolocation_data(log_event_json['srcaddr'])
-            #merged_data = {**log_event_json, **geolocation_data}
+            log_event_json['geodata'] = get_geolocation_data(
+                                        log_event_json['srcaddr'])
             logger.info(iot_client.publish(
                 topic=os.environ['IOT_TOPIC_NAME'],
-                qos=1, # at least once 
+                qos=1,   # at least once
                 payload=bytes(json.dumps(log_event_json), "utf-8")
                 )
             )
